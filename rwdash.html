@@ -74,14 +74,17 @@
   </head>
 
   <body class="p-4">
-    <h1 class="mb-4">Torn War Dashboard</h1>
+    <h1 class="mb-4">Torn War Dashboard v0.19</h1>
+
     <hr />
     <div class="dashboard-summary">
       <strong>What is this?</strong> This dashboard helps you monitor Torn
       Ranked War activity: it tracks your chain status, watches enemy faction
-      members' hospital/online status, and provides audio/visual alerts for
-      critical events. Configure your API key and alert settings below, then
-      click <b>Start</b> to begin monitoring.
+      members' hospital/online status. Configure your API key and alert settings
+      below, then click <b>Start</b> to begin monitoring.
+      <a href="https://github.com/logic-loop/rwdash" target="_blank"
+        >GitHub Repo</a
+      >
     </div>
     <div class="row" id="settings">
       <div class="col-md-6">
@@ -223,18 +226,26 @@
           </div>
         </div>
       </div>
-     <div class="col-md-6">
-  <div class="card mb-3 d-flex align-items-center justify-content-center" style="min-height: 120px;">
-    <div class="card-body d-flex flex-column align-items-start">
-      <h5 class="card-title">Should I Turtle?</h5>
-      <h6 class="card-subtitle mb-2 text-muted" id="turtleStatus">
-        If players above the max level in settings are selected, you'll see the turtling turtle.
-      </h6>
-      <img id="turtleAttackImg" src="images/attack.png" alt="Status" style="max-width:100%;" />
-    </div>
-  </div>
-</div>
-
+      <div class="col-md-6">
+        <div
+          class="card mb-3 d-flex align-items-center justify-content-center"
+          style="min-height: 120px"
+        >
+          <div class="card-body d-flex flex-column align-items-start">
+            <h5 class="card-title">Should I Turtle?</h5>
+            <h6 class="card-subtitle mb-2 text-muted" id="turtleStatus">
+              If players above the max level in settings are selected, you'll
+              see the turtling turtle.
+            </h6>
+            <img
+              id="turtleAttackImg"
+              src="images/attack.png"
+              alt="Status"
+              style="max-width: 100%"
+            />
+          </div>
+        </div>
+      </div>
     </div>
 
     <hr />
