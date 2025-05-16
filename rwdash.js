@@ -2,7 +2,10 @@
 let chainAlertPlayed = false;
 const IN_DEBUG_MODE = false;
 const HOSP_ALERT_THRESHOLD = 60; // seconds
-const ALERT_COOLDOWN = 60000; // milliseconds. yes. i know it's not consistent with the line above
+let ALERT_COOLDOWN = 60000; // milliseconds. Will be set from UI
+let ALLOW_AUDIO = true; // Will be set from UI
+let TURTLE_IF_OVER_LEVEL = 1; // Will be set from UI
+let ATTACK_IF_UNDER_LEVEL = 100; // Will be set from UI
 
 // Track last play time for each sound
 const lastSoundPlayed = {
@@ -14,6 +17,7 @@ let chainInterval = null;
 let hospitalInterval = null;
 
 function playSoundWithCooldown(soundId, key, cooldownMs = ALERT_COOLDOWN) {
+  if (!ALLOW_AUDIO) return;
   const now = Date.now();
   if (now - lastSoundPlayed[key] < cooldownMs) return;
   const sound = document.getElementById(soundId);
@@ -46,6 +50,10 @@ function startMonitoring() {
   const refreshInterval = parseInt(
     document.getElementById("refreshInterval").value.trim()
   );
+  ALLOW_AUDIO = document.getElementById("allowAudio").checked;
+  ALERT_COOLDOWN = parseInt(document.getElementById("audioCooldown").value) || 60000;
+  TURTLE_IF_OVER_LEVEL = parseInt(document.getElementById("turtleIfOver").value) || 1;
+  ATTACK_IF_UNDER_LEVEL = parseInt(document.getElementById("attackIfUnder").value) || 100;
 
   if (!apiKey || !enemyFactionId) {
     alert("API key and enemy faction ID required");
@@ -188,6 +196,9 @@ async function populateEnemyTables(apiKey, factionId) {
   hospitalMembers.sort((a, b) => a.level - b.level);
   okayMembers.sort((a, b) => b.level - a.level);
 
+  // Find if any enemy player > TURTLE_IF_OVER_LEVEL is ok and online
+  const highLevelOnlineOk = okayMembers.some(m => m.level > TURTLE_IF_OVER_LEVEL && m.status?.description === "Okay" && m.last_action?.status === "Online");
+
   hospitalMembers.forEach((m) => {
     const lastAction = m.last_action
       ? `${m.last_action.status} (${m.last_action.relative || ""})`
@@ -215,8 +226,14 @@ async function populateEnemyTables(apiKey, factionId) {
       <td>${formatTimeLeft(timeLeft)}</td>
     </tr>`;
     tbody.innerHTML += row;
-    if (timeLeft < HOSP_ALERT_THRESHOLD)
-      playSoundWithCooldown("goGetEmSound", "goGetEm");
+    if (
+      timeLeft < HOSP_ALERT_THRESHOLD &&
+      ALLOW_AUDIO &&
+      !highLevelOnlineOk &&
+      m.level <= ATTACK_IF_UNDER_LEVEL
+    ) {
+      playSoundWithCooldown("goGetEmSound", "goGetEm", ALERT_COOLDOWN);
+    }
   });
 
   okayMembers.forEach((m) => {
