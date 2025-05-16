@@ -248,25 +248,12 @@ async function populateEnemyTables(apiKey, factionId) {
     const lastAction = m.last_action
       ? `${m.last_action.status} (${m.last_action.relative || ""})`
       : "";
-    const timeLeft = m.status?.until ? m.status.until - now : "";
-    function formatTimeLeft(seconds) {
-      if (!seconds || seconds < 0) return "";
-      const h = Math.floor(seconds / 3600);
-      const m_ = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      return [
-        h > 0 ? String(h).padStart(2, "0") : "00",
-        String(m_).padStart(2, "0"),
-        String(s).padStart(2, "0"),
-      ].join(":");
-    }
     okayTable.row.add([
       `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
       `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
       m.level,
       m.status?.state || "",
-      lastAction,
-      formatTimeLeft(timeLeft)
+      lastAction
     ]);
   });
 
