@@ -177,10 +177,11 @@ async function populateEnemyTables(apiKey, factionId) {
 
   const members = Object.values(data.members || {});
   const now = Math.floor(Date.now() / 1000);
-  const tbody = document.querySelector("#hospitalTable tbody");
-  const okayTbody = document.querySelector("#okayTable tbody");
-  tbody.innerHTML = "";
-  okayTbody.innerHTML = "";
+  // Use DataTables API instead of direct innerHTML
+  const hospitalTable = $('#hospitalTable').DataTable();
+  const okayTable = $('#okayTable').DataTable();
+  hospitalTable.clear();
+  okayTable.clear();
 
   // Separate hospital and okay members
   const hospitalMembers = [];
@@ -222,21 +223,17 @@ async function populateEnemyTables(apiKey, factionId) {
       ].join(":");
     }
     const highlight =
-      timeLeft < HOSP_ALERT_THRESHOLD ? ' class="hospital-alert"' : "";
-    const row = `<tr${highlight}>
-      <td><a href="https://www.torn.com/profiles.php?XID=${
-        m.id
-      }" target="_blank">${m.name}</a></td>
-      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${
-        m.id
-      }" target="_blank">🔫💣🔪</a></td>
-      <td>${m.level}</td>
-      <td>${m.status.state}</td>
-      <td>${lastAction}</td>
-      <td>${new Date(m.status.until * 1000).toLocaleTimeString()}</td>
-      <td>${formatTimeLeft(timeLeft)}</td>
-    </tr>`;
-    tbody.innerHTML += row;
+      timeLeft < HOSP_ALERT_THRESHOLD ? 'hospital-alert' : "";
+    const rowNode = hospitalTable.row.add([
+      `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
+      `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+      m.level,
+      m.status.state,
+      lastAction,
+      new Date(m.status.until * 1000).toLocaleTimeString(),
+      formatTimeLeft(timeLeft)
+    ]).node();
+    if (rowNode && highlight) rowNode.className = highlight;
     if (
       timeLeft < HOSP_ALERT_THRESHOLD &&
       ALLOW_AUDIO &&
@@ -263,18 +260,36 @@ async function populateEnemyTables(apiKey, factionId) {
         String(s).padStart(2, "0"),
       ].join(":");
     }
-    const row = `<tr>
-      <td><a href="https://www.torn.com/profiles.php?XID=${
-        m.id
-      }" target="_blank">${m.name}</a></td>
-      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${
-        m.id
-      }" target="_blank">🔫💣🔪</a></td>
-      <td>${m.level}</td>
-      <td>${m.status?.state || ""}</td>
-      <td>${lastAction}</td>
-      <td>${formatTimeLeft(timeLeft)}</td>
-    </tr>`;
-    okayTbody.innerHTML += row;
+    okayTable.row.add([
+      `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
+      `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+      m.level,
+      m.status?.state || "",
+      lastAction,
+      formatTimeLeft(timeLeft)
+    ]);
   });
+
+  hospitalTable.draw();
+  okayTable.draw();
 }
+
+// DataTables initialization (call this after DOM is ready)
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.jQuery && $.fn.DataTable) {
+    $('#hospitalTable').DataTable({
+      destroy: true,
+      paging: true,
+      searching: true,
+      order: [[2, 'asc']],
+      columnDefs: [ { targets: [1], orderable: false } ]
+    });
+    $('#okayTable').DataTable({
+      destroy: true,
+      paging: true,
+      searching: true,
+      order: [[2, 'desc']],
+      columnDefs: [ { targets: [1], orderable: false } ]
+    });
+  }
+});
