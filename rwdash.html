@@ -1,84 +1,148 @@
 <!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <title>Torn Ranked War Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .alert-blink {
-      animation: blinker 1s linear infinite;
-    }
-
-    @keyframes blinker {
-      50% {
-        opacity: 0;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Torn Ranked War Stuff</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .alert-blink {
+        animation: blinker 1s linear infinite;
       }
-    }
-  </style>
-</head>
 
-<body class="p-4">
-  <h1 class="mb-4">Torn War Dashboard</h1>
-  <div class="row" id="settings">
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label">Torn API Key</label>
-        <input type="text" id="apiKey" class="form-control" placeholder="Paste API key here">
+      @keyframes blinker {
+        50% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="p-4">
+    <h1 class="mb-4">Torn War Dashboard</h1>
+    <hr />
+    <div class="row" id="settings">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Torn API Key</label>
+          <input
+            type="text"
+            id="apiKey"
+            class="form-control"
+            placeholder="Paste API key here"
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Chain Alert Threshold (sec)</label>
+          <input
+            type="number"
+            id="chainThreshold"
+            class="form-control"
+            value="45"
+          />
+        </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label">Chain Alert Threshold (sec)</label>
-        <input type="number" id="chainThreshold" class="form-control" value="45">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Watch Enemy Faction ID</label>
+          <input
+            type="text"
+            id="enemyFactionId"
+            class="form-control"
+            placeholder="e.g. 12345"
+            value="44092"
+          />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Time between refreshes (seconds)</label>
+          <input
+            type="text"
+            id="refreshInterval"
+            class="form-control"
+            placeholder="e.g., a number"
+            value="2"
+          />
+          So this isn't fancy or anything it doesn't yet predict times based on
+          last refresh. it just runs the refresh then checks against the alert
+          values.
+          <b
+            ><u
+              >so be sure to keep this value cranked pretty low - it's the
+              longest you would have to wait after an alert threshold has been
+              crossed</u
+            ></b
+          >
+        </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="mb-3">
-        <label class="form-label">Watch Enemy Faction ID</label>
-        <input type="text" id="enemyFactionId" class="form-control" placeholder="e.g. 12345" value="44092">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Time between refreshes (seconds)</label>
-        <input type="text" id="refreshInterval" class="form-control" placeholder="e.g., a number" value="2">
-        So this isn't fancy or anything it doesn't yet predict times based on last refresh. it just runs the
-          refresh then checks against the alert values. <b><u>so be sure to keep this value cranked pretty low - it's the
-            longest you would have to wait after an alert threshold has been crossed</u></b>
-      </div>
-    </div>
-  </div>
 
-  <button class="btn btn-primary" onclick="startMonitoring()">Start</button>
+    <button class="btn btn-primary" onclick="startMonitoring()" id="startBtn">
+      Start
+    </button>
+    <button
+      class="btn btn-secondary"
+      onclick="stopMonitoring()"
+      id="stopBtn"
+      style="display: none"
+    >
+      Stop
+    </button>
 
-  <hr>
+    <hr />
 
-  <h3>Chain Status</h3>
-  <div id="chainStatus" class="h4"></div>
+    <h3>Chain Status</h3>
+    <div id="chainStatus" class="h4"></div>
 
-  <h3 class="mt-4">Enemy Hospital Watch</h3>
-  <table class="table table-bordered" id="hospitalTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Attack Link</th>
-        <th>Level</th>
-        <th>Status</th>
-        <th>Hospital Until</th>
-        <th>Time Left</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <h3 class="mt-4">Enemy Hospital Watch</h3>
+    <table class="table table-bordered" id="hospitalTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Attack Link</th>
+          <th>Level</th>
+          <th>Status</th>
+          <th>Hospital Until</th>
+          <th>Time Left</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <audio id="chainWarningSound" src="siren-alarm-96503.mp3" preload="auto"></audio>
-  <audio id="goGetEmSound" src="looks-like-meats-back-on-the-menu-boys.mp3" preload="auto"></audio>
+    <h3 class="mt-4">Enemies that are okay</h3>
+    <table class="table table-bordered" id="okayTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Attack Link</th>
+          <th>Level</th>
+          <th>Status</th>
+          <th>Hospital Until</th>
+          <th>Time Left</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <script src="rwdash.js"></script>
-  <script>
-    // Call loadApiKey on page load
-    window.addEventListener('DOMContentLoaded', function() {
-      if (typeof loadApiKey === 'function') loadApiKey();
-    });
-  </script>
-</body>
+    <audio
+      id="chainWarningSound"
+      src="siren-alarm-96503.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="goGetEmSound"
+      src="looks-like-meats-back-on-the-menu-boys.mp3"
+      preload="auto"
+    ></audio>
 
+    <script src="rwdash.js"></script>
+    <script>
+      // Call loadApiKey on page load
+      window.addEventListener("DOMContentLoaded", function () {
+        if (typeof loadApiKey === "function") loadApiKey();
+      });
+    </script>
+  </body>
 </html>
