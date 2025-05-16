@@ -15,6 +15,19 @@ const lastSoundPlayed = {
 let chainInterval = null;
 let hospitalInterval = null;
 
+// Utility: Format time left as HH:MM:SS
+function formatTimeLeft(seconds) {
+  if (!seconds || seconds < 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return [
+    h > 0 ? String(h).padStart(2, "0") : "00",
+    String(m).padStart(2, "0"),
+    String(s).padStart(2, "0"),
+  ].join(":");
+}
+
 function playSoundWithCooldown(soundId, key, cooldownMs = ALERT_COOLDOWN) {
   if (!ALLOW_AUDIO) return;
   const now = Date.now();
@@ -169,96 +182,76 @@ async function checkChain(apiKey, threshold) {
 
 async function populateEnemyTables(apiKey, factionId) {
   const url = `https://api.torn.com/v2/faction/${factionId}/members?key=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) return;
-  const data = await res.json();
-
-  if (IN_DEBUG_MODE) console.log("Faction data:", data);
-
-  const members = Object.values(data.members || {});
-  const now = Math.floor(Date.now() / 1000);
-  // Use DataTables API instead of direct innerHTML
-  const hospitalTable = $('#hospitalTable').DataTable();
-  const okayTable = $('#okayTable').DataTable();
-  hospitalTable.clear();
-  okayTable.clear();
-
-  // Separate hospital and okay members
-  const hospitalMembers = [];
-  const okayMembers = [];
-
-  members.forEach((m) => {
-    if (m.status?.state === "Hospital" && m.status?.until) {
-      hospitalMembers.push(m);
-    } else {
-      okayMembers.push(m);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (IN_DEBUG_MODE) console.log("Faction data:", data);
+    const members = Object.values(data.members || {});
+    const now = Math.floor(Date.now() / 1000);
+    const hospitalTable = $('#hospitalTable').DataTable();
+    const okayTable = $('#okayTable').DataTable();
+    hospitalTable.clear();
+    okayTable.clear();
+    const hospitalMembers = [];
+    const okayMembers = [];
+    for (const m of members) {
+      if (m.status?.state === "Hospital" && m.status?.until) {
+        hospitalMembers.push(m);
+      } else {
+        okayMembers.push(m);
+      }
     }
-  });
-
-  // Sort hospital by level ascending, okay by level descending
-  hospitalMembers.sort((a, b) => a.level - b.level);
-  okayMembers.sort((a, b) => b.level - a.level);
-
-  // Find if any enemy player > TURTLE_IF_OVER_LEVEL is ok and online
-  const highLevelOnlineOk = okayMembers.some(
-    (m) =>
-      m.level > TURTLE_IF_OVER_LEVEL &&
-      m.status?.description === "Okay" &&
-      m.last_action?.status === "Online"
-  );
-
-  hospitalMembers.forEach((m) => {
-    const lastAction = m.last_action
-      ? `${m.last_action.status} (${m.last_action.relative || ""})`
-      : "";
-    const timeLeft = m.status.until - now;
-    function formatTimeLeft(seconds) {
-      const h = Math.floor(seconds / 3600);
-      const m_ = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      return [
-        h > 0 ? String(h).padStart(2, "0") : "00",
-        String(m_).padStart(2, "0"),
-        String(s).padStart(2, "0"),
-      ].join(":");
+    hospitalMembers.sort((a, b) => a.level - b.level);
+    okayMembers.sort((a, b) => b.level - a.level);
+    const highLevelOnlineOk = okayMembers.some(
+      (m) =>
+        m.level > TURTLE_IF_OVER_LEVEL &&
+        m.status?.description === "Okay" &&
+        m.last_action?.status === "Online"
+    );
+    for (const m of hospitalMembers) {
+      const lastAction = m.last_action
+        ? `${m.last_action.status} (${m.last_action.relative || ""})`
+        : "";
+      const timeLeft = m.status.until - now;
+      const highlight = timeLeft < HOSP_ALERT_THRESHOLD ? 'hospital-alert' : "";
+      const rowNode = hospitalTable.row.add([
+        `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
+        `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+        m.level,
+        m.status.state,
+        lastAction,
+        new Date(m.status.until * 1000).toLocaleTimeString(),
+        formatTimeLeft(timeLeft)
+      ]).node();
+      if (rowNode && highlight) rowNode.className = highlight;
+      if (
+        timeLeft < HOSP_ALERT_THRESHOLD &&
+        ALLOW_AUDIO &&
+        !highLevelOnlineOk &&
+        m.level <= ATTACK_IF_UNDER_LEVEL
+      ) {
+        playSoundWithCooldown("goGetEmSound", "goGetEm", ALERT_COOLDOWN);
+      }
     }
-    const highlight =
-      timeLeft < HOSP_ALERT_THRESHOLD ? 'hospital-alert' : "";
-    const rowNode = hospitalTable.row.add([
-      `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
-      `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
-      m.level,
-      m.status.state,
-      lastAction,
-      new Date(m.status.until * 1000).toLocaleTimeString(),
-      formatTimeLeft(timeLeft)
-    ]).node();
-    if (rowNode && highlight) rowNode.className = highlight;
-    if (
-      timeLeft < HOSP_ALERT_THRESHOLD &&
-      ALLOW_AUDIO &&
-      !highLevelOnlineOk &&
-      m.level <= ATTACK_IF_UNDER_LEVEL
-    ) {
-      playSoundWithCooldown("goGetEmSound", "goGetEm", ALERT_COOLDOWN);
+    for (const m of okayMembers) {
+      const lastAction = m.last_action
+        ? `${m.last_action.status} (${m.last_action.relative || ""})`
+        : "";
+      okayTable.row.add([
+        `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
+        `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+        m.level,
+        m.status?.state || "",
+        lastAction
+      ]);
     }
-  });
-
-  okayMembers.forEach((m) => {
-    const lastAction = m.last_action
-      ? `${m.last_action.status} (${m.last_action.relative || ""})`
-      : "";
-    okayTable.row.add([
-      `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
-      `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
-      m.level,
-      m.status?.state || "",
-      lastAction
-    ]);
-  });
-
-  hospitalTable.draw();
-  okayTable.draw();
+    hospitalTable.draw();
+    okayTable.draw();
+  } catch (err) {
+    if (IN_DEBUG_MODE) console.error("Error fetching faction data:", err);
+  }
 }
 
 // DataTables initialization (call this after DOM is ready)
