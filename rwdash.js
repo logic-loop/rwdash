@@ -1,6 +1,6 @@
 // script.js
 let chainAlertPlayed = false;
-const IN_DEBUG_MODE = true;
+const IN_DEBUG_MODE = false;
 const HOSP_ALERT_THRESHOLD = 60; // seconds
 const ALERT_COOLDOWN = 60000; // milliseconds. yes. i know it's not consistent with the line above
 
@@ -84,7 +84,7 @@ function startMonitoring() {
     });
 
   checkChain(apiKey, chainThreshold);
-  checkEnemyHospital(apiKey, enemyFactionId);
+  populateEnemyTables(apiKey, enemyFactionId);
 
   // Clear previous intervals if any
   if (chainInterval) clearInterval(chainInterval);
@@ -95,7 +95,7 @@ function startMonitoring() {
     refreshInterval * 1000
   );
   hospitalInterval = setInterval(
-    () => checkEnemyHospital(apiKey, enemyFactionId),
+    () => populateEnemyTables(apiKey, enemyFactionId),
     refreshInterval * 1000
   );
 }
@@ -157,63 +157,92 @@ async function checkChain(apiKey, threshold) {
   }
 }
 
-async function checkEnemyHospital(apiKey, factionId) {
-  //const url = `https://api.torn.com/faction/${factionId}?selections=basic&key=${apiKey}`;
+async function populateEnemyTables(apiKey, factionId) {
   const url = `https://api.torn.com/v2/faction/${factionId}/members?key=${apiKey}`;
   const res = await fetch(url);
   if (!res.ok) return;
   const data = await res.json();
 
-  // Log the response for inspection
   if (IN_DEBUG_MODE) console.log("Faction data:", data);
 
   const members = Object.values(data.members || {});
   const now = Math.floor(Date.now() / 1000);
   const tbody = document.querySelector("#hospitalTable tbody");
+  const okayTbody = document.querySelector("#okayTable tbody");
   tbody.innerHTML = "";
+  okayTbody.innerHTML = "";
 
-  // Show all hospd members
+  // Separate hospital and okay members
+  const hospitalMembers = [];
+  const okayMembers = [];
+
   members.forEach((m) => {
     if (m.status?.state === "Hospital" && m.status?.until) {
-      // Phase 4: Calculate time left
-      const timeLeft = m.status.until - now;
-      // Format timeLeft as hh:mm:ss
-      function formatTimeLeft(seconds) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        return [
-          h > 0 ? String(h).padStart(2, "0") : "00",
-          String(m).padStart(2, "0"),
-          String(s).padStart(2, "0"),
-        ].join(":");
-      }
-
-      // Highlight row if timeLeft < HOSP_ALERT_THRESHOLD
-      const highlight =
-        timeLeft < HOSP_ALERT_THRESHOLD
-          ? ' style="background-color:#FFDAB9;"'
-          : "";
-
-      const row = `<tr${highlight}>
-        <td><a href="https://www.torn.com/profiles.php?XID=${
-          m.id
-        }" target="_blank">${m.name}</a></td>
-        <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${
-          m.id
-        }" target="_blank">🔫💣🔪</a></td>
-        <td>${m.level}</td>
-        <td>${m.status.state}</td>
-        <td>${new Date(m.status.until * 1000).toLocaleTimeString()}</td>
-        <td>${formatTimeLeft(timeLeft)}</td>
-      </tr>`;
-      // https://www.torn.com/profiles.php?XID=1865243
-      //
-      tbody.innerHTML += row;
-
-      // Alert if time left is less than 60 seconds
-      if (timeLeft < HOSP_ALERT_THRESHOLD)
-        playSoundWithCooldown("goGetEmSound", "goGetEm");
+      hospitalMembers.push(m);
+    } else {
+      okayMembers.push(m);
     }
+  });
+
+  // Sort hospital by level ascending, okay by level descending
+  hospitalMembers.sort((a, b) => a.level - b.level);
+  okayMembers.sort((a, b) => b.level - a.level);
+
+  hospitalMembers.forEach((m) => {
+    const lastAction = m.last_action
+      ? `${m.last_action.status} (${m.last_action.relative || ""})`
+      : "";
+    const timeLeft = m.status.until - now;
+    function formatTimeLeft(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m_ = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return [
+        h > 0 ? String(h).padStart(2, "0") : "00",
+        String(m_).padStart(2, "0"),
+        String(s).padStart(2, "0"),
+      ].join(":");
+    }
+    const highlight =
+      timeLeft < HOSP_ALERT_THRESHOLD ? ' class="hospital-alert"' : "";
+    const row = `<tr${highlight}>
+      <td><a href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank">${m.name}</a></td>
+      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}" target="_blank">🔫💣🔪</a></td>
+      <td>${m.level}</td>
+      <td>${m.status.state}</td>
+      <td>${lastAction}</td>
+      <td>${new Date(m.status.until * 1000).toLocaleTimeString()}</td>
+      <td>${formatTimeLeft(timeLeft)}</td>
+    </tr>`;
+    tbody.innerHTML += row;
+    if (timeLeft < HOSP_ALERT_THRESHOLD)
+      playSoundWithCooldown("goGetEmSound", "goGetEm");
+  });
+
+  okayMembers.forEach((m) => {
+    const lastAction = m.last_action
+      ? `${m.last_action.status} (${m.last_action.relative || ""})`
+      : "";
+    const timeLeft = m.status?.until ? m.status.until - now : "";
+    function formatTimeLeft(seconds) {
+      if (!seconds || seconds < 0) return "";
+      const h = Math.floor(seconds / 3600);
+      const m_ = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return [
+        h > 0 ? String(h).padStart(2, "0") : "00",
+        String(m_).padStart(2, "0"),
+        String(s).padStart(2, "0"),
+      ].join(":");
+    }
+    const row = `<tr>
+      <td><a href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank">${m.name}</a></td>
+      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}" target="_blank">🔫💣🔪</a></td>
+      <td>${m.level}</td>
+      <td>${m.status?.state || ""}</td>
+      <td>${lastAction}</td>
+      <td>${formatTimeLeft(timeLeft)}</td>
+    </tr>`;
+    okayTbody.innerHTML += row;
   });
 }
