@@ -1,5 +1,5 @@
 let chainAlertPlayed = false;
-const IN_DEBUG_MODE = false;
+const IN_DEBUG_MODE = true;
 const HOSP_ALERT_THRESHOLD = 60; // seconds
 let ALERT_COOLDOWN = 60000; // milliseconds. Will be set from UI
 let ALLOW_AUDIO = true; // Will be set from UI
@@ -150,7 +150,7 @@ async function checkChain(apiKey, threshold) {
   const data = await res.json();
   if (IN_DEBUG_MODE) console.log("Chain data:", data);
 
-  const remaining = data.chain?.cooldown || 0;
+  const remaining = data.chain?.timeout || 0;
   const currentlen = data.chain?.current || 0;
   const cooldown = data.chain?.cooldown || 0;
   var inchain = false;
