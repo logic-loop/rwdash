@@ -12,6 +12,9 @@ const lastSoundPlayed = {
   goGetEm: 0,
 };
 
+// Track which hospital members have already triggered goGetEm sound for their current hospital stay
+const goGetEmPlayedFor = {}; // { [memberId]: untilTimestamp }
+
 let chainInterval = null;
 let hospitalInterval = null;
 
@@ -208,7 +211,7 @@ async function populateEnemyTables(apiKey, factionId) {
       (m) =>
         m.level > TURTLE_IF_OVER_LEVEL &&
         m.status?.description === "Okay" &&
-        m.last_action?.status === "Online"
+        (m.last_action?.status === "Online" || m.last_action?.status === "Idle")
     );
     // Update turtle/attack image card
     const turtleAttackImg = document.getElementById('turtleAttackImg');
@@ -238,7 +241,16 @@ async function populateEnemyTables(apiKey, factionId) {
         !highLevelOnlineOk &&
         m.level <= ATTACK_IF_UNDER_LEVEL
       ) {
-        playSoundWithCooldown("goGetEmSound", "goGetEm", ALERT_COOLDOWN);
+        // Only play sound if not already played for this member's current hospital stay
+        if (goGetEmPlayedFor[m.id] !== m.status.until) {
+          playSoundWithCooldown("goGetEmSound", "goGetEm", ALERT_COOLDOWN);
+          goGetEmPlayedFor[m.id] = m.status.until;
+        }
+      } else {
+        // Reset tracking if member is no longer in alert state or eligible
+        if (goGetEmPlayedFor[m.id] && goGetEmPlayedFor[m.id] !== m.status.until) {
+          delete goGetEmPlayedFor[m.id];
+        }
       }
     }
     for (const m of okayMembers) {
