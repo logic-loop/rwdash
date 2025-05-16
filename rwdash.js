@@ -144,10 +144,10 @@ async function checkChain(apiKey, threshold) {
 
   var chainstatus = "Unknown Status";
   if (remaining > 0 && currentlen > 0) {
-    chainstatus = "Chain in progress ${remaining} sec remaining";
+    chainstatus = `Chain in progress ${remaining} sec remaining`;
     inchain = true;
   } else if (cooldown > 0) {
-    chainstatus = "Chain in cooldown for ${cooldown} sec";
+    chainstatus = `Chain in cooldown for ${cooldown} sec`;
   } else {
     chainstatus = "No chain in progress";
   }
