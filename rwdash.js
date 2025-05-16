@@ -210,6 +210,12 @@ async function populateEnemyTables(apiKey, factionId) {
         m.status?.description === "Okay" &&
         m.last_action?.status === "Online"
     );
+    // Update turtle/attack image card
+    const turtleAttackImg = document.getElementById('turtleAttackImg');
+    if (turtleAttackImg) {
+      turtleAttackImg.src = highLevelOnlineOk ? 'images/turtle.png' : 'images/attack.png';
+      turtleAttackImg.alt = highLevelOnlineOk ? 'Turtle' : 'Attack';
+    }
     for (const m of hospitalMembers) {
       const lastAction = m.last_action
         ? `${m.last_action.status} (${m.last_action.relative || ""})`
