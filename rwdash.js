@@ -1,4 +1,3 @@
-// script.js
 let chainAlertPlayed = false;
 const IN_DEBUG_MODE = false;
 const HOSP_ALERT_THRESHOLD = 60; // seconds
@@ -51,9 +50,12 @@ function startMonitoring() {
     document.getElementById("refreshInterval").value.trim()
   );
   ALLOW_AUDIO = document.getElementById("allowAudio").checked;
-  ALERT_COOLDOWN = parseInt(document.getElementById("audioCooldown").value) || 60000;
-  TURTLE_IF_OVER_LEVEL = parseInt(document.getElementById("turtleIfOver").value) || 1;
-  ATTACK_IF_UNDER_LEVEL = parseInt(document.getElementById("attackIfUnder").value) || 100;
+  ALERT_COOLDOWN =
+    parseInt(document.getElementById("audioCooldown").value) || 60000;
+  TURTLE_IF_OVER_LEVEL =
+    parseInt(document.getElementById("turtleIfOver").value) || 1;
+  ATTACK_IF_UNDER_LEVEL =
+    parseInt(document.getElementById("attackIfUnder").value) || 100;
 
   if (!apiKey || !enemyFactionId) {
     alert("API key and enemy faction ID required");
@@ -197,7 +199,12 @@ async function populateEnemyTables(apiKey, factionId) {
   okayMembers.sort((a, b) => b.level - a.level);
 
   // Find if any enemy player > TURTLE_IF_OVER_LEVEL is ok and online
-  const highLevelOnlineOk = okayMembers.some(m => m.level > TURTLE_IF_OVER_LEVEL && m.status?.description === "Okay" && m.last_action?.status === "Online");
+  const highLevelOnlineOk = okayMembers.some(
+    (m) =>
+      m.level > TURTLE_IF_OVER_LEVEL &&
+      m.status?.description === "Okay" &&
+      m.last_action?.status === "Online"
+  );
 
   hospitalMembers.forEach((m) => {
     const lastAction = m.last_action
@@ -217,8 +224,12 @@ async function populateEnemyTables(apiKey, factionId) {
     const highlight =
       timeLeft < HOSP_ALERT_THRESHOLD ? ' class="hospital-alert"' : "";
     const row = `<tr${highlight}>
-      <td><a href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank">${m.name}</a></td>
-      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}" target="_blank">🔫💣🔪</a></td>
+      <td><a href="https://www.torn.com/profiles.php?XID=${
+        m.id
+      }" target="_blank">${m.name}</a></td>
+      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${
+        m.id
+      }" target="_blank">🔫💣🔪</a></td>
       <td>${m.level}</td>
       <td>${m.status.state}</td>
       <td>${lastAction}</td>
@@ -253,8 +264,12 @@ async function populateEnemyTables(apiKey, factionId) {
       ].join(":");
     }
     const row = `<tr>
-      <td><a href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank">${m.name}</a></td>
-      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}" target="_blank">🔫💣🔪</a></td>
+      <td><a href="https://www.torn.com/profiles.php?XID=${
+        m.id
+      }" target="_blank">${m.name}</a></td>
+      <td><a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${
+        m.id
+      }" target="_blank">🔫💣🔪</a></td>
       <td>${m.level}</td>
       <td>${m.status?.state || ""}</td>
       <td>${lastAction}</td>

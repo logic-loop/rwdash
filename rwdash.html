@@ -21,102 +21,185 @@
       .hospital-alert {
         background-color: #f97400 !important;
       }
+      /* Custom theme improvements */
+      body {
+        background: #f8fafc;
+      }
+      .dashboard-summary {
+        background: #e3f2fd;
+        border-left: 5px solid #1976d2;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+      }
+      .settings-card {
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .settings-section-title {
+        font-weight: 600;
+        color: #1976d2;
+        margin-bottom: 0.5rem;
+      }
+      .form-label {
+        font-weight: 500;
+      }
     </style>
   </head>
 
   <body class="p-4">
     <h1 class="mb-4">Torn War Dashboard</h1>
     <hr />
+    <div class="dashboard-summary">
+      <strong>What is this?</strong> This dashboard helps you monitor Torn
+      Ranked War activity: it tracks your chain status, watches enemy faction
+      members' hospital/online status, and provides audio/visual alerts for
+      critical events. Configure your API key and alert settings below, then
+      click <b>Start</b> to begin monitoring.
+    </div>
     <div class="row" id="settings">
       <div class="col-md-6">
-        <div class="mb-3">
-          <label class="form-label">Torn API Key</label>
-          <input
-            type="text"
-            id="apiKey"
-            class="form-control"
-            placeholder="Paste API key here"
-          />
+        <div class="card settings-card">
+          <div class="card-body">
+            <div class="settings-section-title">API Settings</div>
+            <div class="mb-3">
+              <label class="form-label">Torn API Key</label>
+              <input
+                type="text"
+                id="apiKey"
+                class="form-control"
+                placeholder="Paste API key here"
+              />
+            </div>
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Chain Alert Threshold (sec)</label>
-          <input
-            type="number"
-            id="chainThreshold"
-            class="form-control"
-            value="45"
-          />
+        <div class="card settings-card">
+          <div class="card-body">
+            <div class="settings-section-title">Chain Alert Settings</div>
+            <div class="mb-3">
+              <label class="form-label">Chain Alert Threshold (sec)</label>
+              <input
+                type="number"
+                id="chainThreshold"
+                class="form-control"
+                value="45"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Audio Alert Cooldown (ms)</label>
+              <div class="form-text">
+                Won't play an audio alert if the last one was played within this
+                time.
+              </div>
+              <input
+                type="number"
+                id="audioCooldown"
+                class="form-control"
+                value="60000"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">
+                <input type="checkbox" id="allowAudio" checked /> Allow Audio
+                Notifications
+              </label>
+            </div>
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">
-            <input type="checkbox" id="allowAudio" checked /> Allow Audio Notifications
-          </label>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Audio Alert Cooldown (ms)</label>
-          <input type="number" id="audioCooldown" class="form-control" value="60000" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Turtle if any players over level </label>
-          <input type="number" id="hideIfOver" class="form-control" value="60" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Attack players below level</label>
-          <input type="number" id="attackIfUnder" class="form-control" value="40" />
+        <div class="card settings-card">
+          <div class="card-body">
+            <div class="settings-section-title">Attack/Turtle Settings</div>
+            <div class="form-text">
+              These settings also control when the "Go Get 'Em" sound plays<br />
+            </div>
+            <div class="mb-3">
+              <label class="form-label"
+                >Turtle if any players over level
+              </label>
+              <input
+                type="number"
+                id="turtleIfOver"
+                class="form-control"
+                value="60"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Attack players below level</label>
+              <input
+                type="number"
+                id="attackIfUnder"
+                class="form-control"
+                value="40"
+              />
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-6">
-        <div class="mb-3">
-          <label class="form-label">Watch Enemy Faction ID</label>
-          <input
-            type="text"
-            id="enemyFactionId"
-            class="form-control"
-            placeholder="e.g. 12345"
-            value="44092"
-          />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Time between refreshes (seconds)</label>
-          <input
-            type="text"
-            id="refreshInterval"
-            class="form-control"
-            placeholder="e.g., a number"
-            value="2"
-          />
-          So this isn't fancy or anything it doesn't yet predict times based on
-          last refresh. it just runs the refresh then checks against the alert
-          values.
-          <b
-            ><u
-              >so be sure to keep this value cranked pretty low - it's the
-              longest you would have to wait after an alert threshold has been
-              crossed</u
-            ></b
-          >
+        <div class="card settings-card">
+          <div class="card-body">
+            <div class="settings-section-title">Enemy Faction Settings</div>
+            <div class="mb-3">
+              <label class="form-label">Watch Enemy Faction ID</label>
+              <input
+                type="text"
+                id="enemyFactionId"
+                class="form-control"
+                placeholder="e.g. 12345"
+                value="44092"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Time between refreshes (seconds)</label>
+              <input
+                type="text"
+                id="refreshInterval"
+                class="form-control"
+                placeholder="e.g., a number"
+                value="2"
+              />
+              <div class="form-text">
+                This is the polling interval. Logic is only evaluated after a
+                poll completes, so keep this pretty short.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="startMonitoring()" id="startBtn">
-      Start
-    </button>
-    <button
-      class="btn btn-secondary"
-      onclick="stopMonitoring()"
-      id="stopBtn"
-      style="display: none"
-    >
-      Stop
-    </button>
+    <div class="mb-4">
+      <button
+        class="btn btn-primary me-2"
+        onclick="startMonitoring()"
+        id="startBtn"
+      >
+        Start
+      </button>
+      <button
+        class="btn btn-secondary"
+        onclick="stopMonitoring()"
+        id="stopBtn"
+        style="display: none"
+      >
+        Stop
+      </button>
+    </div>
 
     <hr />
 
     <h3>Chain Status</h3>
     <div id="chainStatus" class="h4"></div>
+    <br />
+    <hr />
 
     <h3 class="mt-4">Enemy Hospital Watch</h3>
+    <div class="form-text">
+      The PistolBombKnife takes you to the attack page for them, which is
+      available before they leave the hospital. You just can't click attack
+      before they're out.
+    </div>
     <table class="table table-bordered" id="hospitalTable">
       <thead>
         <tr>
@@ -133,6 +216,9 @@
     </table>
 
     <h3 class="mt-4">Enemies that are okay</h3>
+    <div class="form-text">
+      The PistolBombKnife takes you to the attack page for them.
+    </div>
     <table class="table table-bordered" id="okayTable">
       <thead>
         <tr>
