@@ -1,6 +1,6 @@
 let chainAlertPlayed = false;
 const IN_DEBUG_MODE = true;
-const HOSP_ALERT_THRESHOLD = 60; // seconds
+const HOSP_ALERT_THRESHOLD = 90; // seconds
 let ALERT_COOLDOWN = 60000; // milliseconds. Will be set from UI
 let ALLOW_AUDIO = true; // Will be set from UI
 let TURTLE_IF_OVER_LEVEL = 1; // Will be set from UI
@@ -15,8 +15,8 @@ const lastSoundPlayed = {
 // Track which hospital members have already triggered goGetEm sound for their current hospital stay
 const goGetEmPlayedFor = {}; // { [memberId]: untilTimestamp }
 
-let chainInterval = null;
-let hospitalInterval = null;
+// Track if a sound is currently playing
+let soundIsPlaying = false;
 
 // Utility: Format time left as HH:MM:SS
 function formatTimeLeft(seconds) {
@@ -37,8 +37,21 @@ function playSoundWithCooldown(soundId, key, cooldownMs = ALERT_COOLDOWN) {
   if (now - lastSoundPlayed[key] < cooldownMs) return;
   const sound = document.getElementById(soundId);
   if (sound) {
+    // If already playing, don't start another
+    if (soundIsPlaying) return;
+    soundIsPlaying = true;
     sound.play();
     lastSoundPlayed[key] = now;
+    // Listen for end of playback to clear flag
+    sound.onended = () => {
+      soundIsPlaying = false;
+      sound.onended = null;
+    };
+    // Also clear flag if playback fails
+    sound.onerror = () => {
+      soundIsPlaying = false;
+      sound.onerror = null;
+    };
   }
 }
 
@@ -147,6 +160,7 @@ function stopMonitoring() {
 }
 
 async function checkChain(apiKey, threshold) {
+  if (soundIsPlaying) return; // Pause updates while sound is playing
   const url = `https://api.torn.com/faction/?selections=chain&key=${apiKey}`;
   const res = await fetch(url);
   if (!res.ok) return;
@@ -184,6 +198,7 @@ async function checkChain(apiKey, threshold) {
 }
 
 async function populateEnemyTables(apiKey, factionId) {
+  if (soundIsPlaying) return; // Pause updates while sound is playing
   const url = `https://api.torn.com/v2/faction/${factionId}/members?key=${apiKey}`;
   try {
     const res = await fetch(url);
