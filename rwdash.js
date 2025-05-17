@@ -5,6 +5,8 @@ let ALERT_COOLDOWN = 60000; // milliseconds. Will be set from UI
 let ALLOW_AUDIO = true; // Will be set from UI
 let TURTLE_IF_OVER_LEVEL = 1; // Will be set from UI
 let ATTACK_IF_UNDER_LEVEL = 100; // Will be set from UI
+let chainInterval = 2;
+let hospitalInterval = 2;
 
 // Track last play time for each sound
 const lastSoundPlayed = {
