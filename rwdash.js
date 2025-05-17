@@ -1,12 +1,12 @@
 let chainAlertPlayed = false;
-const IN_DEBUG_MODE = true;
+const IN_DEBUG_MODE = false;
 const HOSP_ALERT_THRESHOLD = 90; // seconds
 let ALERT_COOLDOWN = 60000; // milliseconds. Will be set from UI
 let ALLOW_AUDIO = true; // Will be set from UI
 let TURTLE_IF_OVER_LEVEL = 1; // Will be set from UI
 let ATTACK_IF_UNDER_LEVEL = 100; // Will be set from UI
-let chainInterval = 2;
-let hospitalInterval = 2;
+let chainInterval = null;
+let hospitalInterval = null;
 
 // Track last play time for each sound
 const lastSoundPlayed = {
@@ -82,7 +82,7 @@ function startMonitoring() {
   );
   ALLOW_AUDIO = document.getElementById("allowAudio").checked;
   ALERT_COOLDOWN =
-    parseInt(document.getElementById("audioCooldown").value) || 60000;
+    parseInt(document.getElementById("audioCooldown").value)*1000 || 60000;
   TURTLE_IF_OVER_LEVEL =
     parseInt(document.getElementById("turtleIfOver").value) || 1;
   ATTACK_IF_UNDER_LEVEL =
@@ -128,8 +128,8 @@ function startMonitoring() {
   populateEnemyTables(apiKey, enemyFactionId);
 
   // Clear previous intervals if any
-  if (chainInterval) clearInterval(chainInterval);
-  if (hospitalInterval) clearInterval(hospitalInterval);
+  if (typeof chainInterval !== "undefined" && chainInterval) clearInterval(chainInterval);
+  if (typeof hospitalInterval !== "undefined" && hospitalInterval) clearInterval(hospitalInterval);
 
   chainInterval = setInterval(
     () => checkChain(apiKey, chainThreshold),
@@ -151,11 +151,11 @@ function stopMonitoring() {
   document.getElementById("stopBtn").style.display = "none";
 
   // Clear intervals
-  if (chainInterval) {
+  if (typeof chainInterval !== "undefined" && chainInterval) {
     clearInterval(chainInterval);
     chainInterval = null;
   }
-  if (hospitalInterval) {
+  if (typeof hospitalInterval !== "undefined" && hospitalInterval) {
     clearInterval(hospitalInterval);
     hospitalInterval = null;
   }
@@ -209,6 +209,7 @@ async function populateEnemyTables(apiKey, factionId) {
     if (IN_DEBUG_MODE) console.log("Faction data:", data);
     const members = Object.values(data.members || {});
     const now = Math.floor(Date.now() / 1000);
+
     const hospitalTable = $('#hospitalTable').DataTable();
     const okayTable = $('#okayTable').DataTable();
     hospitalTable.clear();
@@ -224,6 +225,13 @@ async function populateEnemyTables(apiKey, factionId) {
     }
     hospitalMembers.sort((a, b) => a.level - b.level);
     okayMembers.sort((a, b) => b.level - a.level);
+
+    //update counts in headers
+    const okhead = document.getElementById('enemyOkHeader');
+    okhead.innerText = "Enemies that are okay ("+ okayMembers.length + ")";
+    const hosphead = document.getElementById('enemyHospHeader');
+    okhead.innerText = "Enemies in hospital ("+ hospitalMembers.length + ")";
+
     const highLevelOnlineOk = okayMembers.some(
       (m) =>
         m.level > TURTLE_IF_OVER_LEVEL &&

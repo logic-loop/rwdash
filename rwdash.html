@@ -114,27 +114,32 @@
                 value="45"
               />
             </div>
+          </div>
+        </div>
+        <div class="card settings-card">
+          <div class="card-body">
+            <div class="settings-section-title">Audio Playback Settings</div>
+            <label class="form-label">
+              <input type="checkbox" id="allowAudio" checked /> Allow Audio
+              Notifications
+            </label>
             <div class="mb-3">
-              <label class="form-label">Audio Alert Cooldown (ms)</label>
+              <label class="form-label">Audio Alert Cooldown 9s)</label>
               <div class="form-text">
-                Won't play an audio alert if the last one was played within this
+                Won't play an audio alert if the last one was of the same type was played within this
                 time.
               </div>
               <input
                 type="number"
                 id="audioCooldown"
                 class="form-control"
-                value="60000"
+                value="60"
               />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">
-                <input type="checkbox" id="allowAudio" checked /> Allow Audio
-                Notifications
-              </label>
             </div>
           </div>
         </div>
+      </div>
+      <div class="col-md-6">
         <div class="card settings-card">
           <div class="card-body">
             <div class="settings-section-title">Attack/Turtle Settings</div>
@@ -163,8 +168,6 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6">
         <div class="card settings-card">
           <div class="card-body">
             <div class="settings-section-title">Enemy Faction Settings</div>
@@ -250,7 +253,7 @@
 
     <hr />
 
-    <h3 class="mt-4">Enemy Hospital Watch</h3>
+    <h3 class="mt-4" id = "enemyHospHeader">Enemy Hospital</h3>
     <div class="form-text">
       The PistolBombKnife takes you to the attack page for them, which is
       available before they leave the hospital. You just can't click attack
@@ -271,7 +274,7 @@
       <tbody></tbody>
     </table>
 
-    <h3 class="mt-4">Enemies that are okay</h3>
+    <h3 class="mt-4" id="enemyOkHeader">Enemies that are okay</h3>
     <div class="form-text">
       The PistolBombKnife takes you to the attack page for them.
     </div>
