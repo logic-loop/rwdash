@@ -199,6 +199,28 @@ async function checkChain(apiKey, threshold) {
   }
 }
 
+function getAttackAndShareRowInfo(member) {
+  const attackLink = `<a href="https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${member.id}" target="_blank">🔫💣🔪</a>`;
+  var idstr = "";
+  
+  if (member.level > 90) 
+      idstr += "SUPER 🥇 ";
+  else if (member.level > 50) 
+      idstr += "HEAVY 🏋️‍♂️ ";
+
+  idstr += "Lv " + member.level;
+
+  if (member.status?.state === "Hospital") 
+      idstr += " 🏥 ";
+  else idstr += " 🆗 ";
+
+  idstr += member.name;
+  idstr += ` https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${member.id} `;
+
+  const copyInfoLink = `<a href="#" onclick="navigator.clipboard.writeText('${idstr}'); return false;">📋</a>`
+  return `${attackLink} &nbsp;&nbsp;|&nbsp;&nbsp; ${copyInfoLink}`;
+}
+
 async function populateEnemyTables(apiKey, factionId) {
   if (soundIsPlaying) return; // Pause updates while sound is playing
   const url = `https://api.torn.com/v2/faction/${factionId}/members?key=${apiKey}`;
@@ -229,9 +251,11 @@ async function populateEnemyTables(apiKey, factionId) {
     //update counts in headers
     const okhead = document.getElementById('enemyOkHeader');
     okhead.innerText = "Enemies that are okay ("+ okayMembers.length + ")";
-    const hosphead = document.getElementById('enemyHospHeader');
-    okhead.innerText = "Enemies in hospital ("+ hospitalMembers.length + ")";
 
+    const hosphead = document.getElementById('enemyHospHeader');
+    hosphead.innerText = "Enemies in hospital ("+ hospitalMembers.length + ")";
+
+    // Check if any high-level members are online and okay
     const highLevelOnlineOk = okayMembers.some(
       (m) =>
         m.level > TURTLE_IF_OVER_LEVEL &&
@@ -244,6 +268,8 @@ async function populateEnemyTables(apiKey, factionId) {
       turtleAttackImg.src = highLevelOnlineOk ? 'images/turtle.png' : 'images/attack.png';
       turtleAttackImg.alt = highLevelOnlineOk ? 'Turtle' : 'Attack';
     }
+
+    //update tables
     for (const m of hospitalMembers) {
       const lastAction = m.last_action
         ? `${m.last_action.status} (${m.last_action.relative || ""})`
@@ -252,7 +278,7 @@ async function populateEnemyTables(apiKey, factionId) {
       const highlight = timeLeft < HOSP_ALERT_THRESHOLD ? 'hospital-alert' : "";
       const rowNode = hospitalTable.row.add([
         `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
-        `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+        getAttackAndShareRowInfo(m),
         m.level,
         m.status.state,
         lastAction,
@@ -284,7 +310,7 @@ async function populateEnemyTables(apiKey, factionId) {
         : "";
       okayTable.row.add([
         `<a href=\"https://www.torn.com/profiles.php?XID=${m.id}\" target=\"_blank\">${m.name}</a>`,
-        `<a href=\"https://www.torn.com/loader2.php?sid=getInAttack&user2ID=${m.id}\" target=\"_blank\">🔫💣🔪</a>`,
+        getAttackAndShareRowInfo(m),
         m.level,
         m.status?.state || "",
         lastAction
