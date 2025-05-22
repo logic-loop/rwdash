@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranked Wars Status Board v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #0f3460 0%, #16537e 100%);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            color: #b8c6db;
+            font-size: 1.1em;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .column {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .column-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .enemy-header {
+            color: #ff6b6b;
+        }
+
+        .hospital-header {
+            color: #feca57;
+        }
+
+        .friendly-header {
+            color: #48dbfb;
+        }
+
+        /* Player Cards */
+        .player-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #ff6b6b;
+            transition: all 0.3s ease;
+        }
+
+        .player-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .friendly-card {
+            border-left-color: #48dbfb;
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #ffffff;
+            text-decoration: none;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .player-name:hover {
+            color: #74b9ff;
+        }
+
+        .player-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .pill-icon {
+            color: #ff7675;
+        }
+
+        .calendar-icon {
+            color: #fdcb6e;
+        }
+
+        .online-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00b894;
+            box-shadow: 0 0 8px rgba(0, 184, 148, 0.6);
+        }
+
+        .last-action {
+            font-size: 0.85em;
+            color: #b2bec3;
+            text-align: right;
+        }
+
+        /* Hospital Table */
+        .hospital-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .hospital-table th {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hospital-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.85em;
+        }
+
+        .hospital-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .claim-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s ease;
+        }
+
+        .claim-btn:hover {
+            background: #00a085;
+        }
+
+        .release-btn {
+            background: #e17055;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background 0.3s ease;
+        }
+
+        .release-btn:hover {
+            background: #d63031;
+        }
+
+        .claimed-by {
+            color: #74b9ff;
+            font-style: italic;
+        }
+
+        /* Action Log */
+        .action-log {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px;
+            max-width: 1400px;
+            margin: 20px auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #a29bfe;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+            color: #ddd;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #74b9ff;
+            font-weight: bold;
+        }
+
+        /* Icons */
+        .icon {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Ranked Wars Status Board</h1>
+        <div class="subtitle">Faction War Coordination Dashboard v2</div>
+    </header>
+
+    <div class="main-container">
+        <!-- Enemy Players Column -->
+        <div class="column">
+            <div class="column-header enemy-header">🔥 Enemy Players (12)</div>
+            
+            <div class="player-card">
+                <a href="#" class="player-name">Imike [2847291]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>247</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>2y 4m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 2 minutes ago</div>
+            </div>
+
+            <div class="player-card">
+                <a href="#" class="player-name">K3rma [1892734]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>189</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>1y 8m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 7 minutes ago</div>
+            </div>
+
+            <div class="player-card">
+                <a href="#" class="player-name">ShadowStriker [3147852]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>312</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>3y 2m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: just now</div>
+            </div>
+
+            <div class="player-card">
+                <a href="#" class="player-name">DeathDealer [2156789]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>156</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>11m 15d</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 15 minutes ago</div>
+            </div>
+        </div>
+
+        <!-- Hospital Column -->
+        <div class="column">
+            <div class="column-header hospital-header">🏥 Enemy Players in Hospital (8)</div>
+            
+            <table class="hospital-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>💊</th>
+                        <th>📅</th>
+                        <th>Status</th>
+                        <th>Last Action</th>
+                        <th>Hospital Time</th>
+                        <th>Claimed By</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="player-name">_DEIMOS_ [2945671]</a></td>
+                        <td>278</td>
+                        <td>2y 1m</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>4m ago</td>
+                        <td>2h 15m</td>
+                        <td><span class="claimed-by">Mingle</span></td>
+                        <td><button class="release-btn">Release</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="player-name">Schmuk1 [1847392]</a></td>
+                        <td>201</td>
+                        <td>1y 7m</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>12m ago</td>
+                        <td>45m</td>
+                        <td>-</td>
+                        <td><button class="claim-btn">Claim</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="player-name">8008135 [3058471]</a></td>
+                        <td>345</td>
+                        <td>3y 8m</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>1m ago</td>
+                        <td>3h 22m</td>
+                        <td><span class="claimed-by">EleventhParty</span></td>
+                        <td><button class="release-btn">Release</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="player-name">Charlie [2647183]</a></td>
+                        <td>167</td>
+                        <td>10m 4d</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>8m ago</td>
+                        <td>1h 33m</td>
+                        <td>-</td>
+                        <td><button class="claim-btn">Claim</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="player-name">ToxicAvenger [1739264]</a></td>
+                        <td>223</td>
+                        <td>1y 3m</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>6m ago</td>
+                        <td>27m</td>
+                        <td><span class="claimed-by">Psilly</span></td>
+                        <td><button class="release-btn">Release</button></td>
+                    </tr>
+                     <tr>
+                        <td><a href="#" class="player-name">NontoxicAvenger [1739264]</a></td>
+                        <td>223</td>
+                        <td>1y 3m</td>
+                        <td><div class="online-indicator"></div></td>
+                        <td>6m ago</td>
+                        <td>27m</td>
+                        <td><span class="claimed-by">Schwartz</span></td>
+                        <td><button class="release-btn">Release</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Friendly Players Column -->
+        <div class="column">
+            <div class="column-header friendly-header">⚔️ Friendly Players Online (9)</div>
+            
+            <div class="player-card friendly-card">
+                <a href="#" class="player-name">AllyWarrior [1947362]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>298</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>2y 7m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: just now</div>
+            </div>
+
+            <div class="player-card friendly-card">
+                <a href="#" class="player-name">FriendlyGiant [2847391]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>425</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>4y 1m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 3 minutes ago</div>
+            </div>
+
+            <div class="player-card friendly-card">
+                <a href="#" class="player-name">TeamMember5 [1638472]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>187</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>1y 2m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 5 minutes ago</div>
+            </div>
+
+            <div class="player-card friendly-card">
+                <a href="#" class="player-name">GuardianAngel [2956184]</a>
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="pill-icon">💊</span>
+                        <span>356</span>
+                    </div>
+                    <div class="stat">
+                        <span class="calendar-icon">📅</span>
+                        <span>3y 4m</span>
+                    </div>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="last-action">Last action: 1 minute ago</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Log -->
+    <div class="action-log">
+        <div class="log-header">📋 Recent Actions</div>
+        <div class="log-entry">
+            <span class="log-time">[15:42]</span> AllyWarrior claimed target BloodThirsty [2945671]
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[15:38]</span> FriendlyGiant attacked and hospitalized NightStalker [3058471]
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[15:35]</span> TeamMember5 released claim on ToxicAvenger [1739264]
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[15:31]</span> GuardianAngel claimed target ViciousViper [1847392]
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[15:28]</span> AllyWarrior attacked CriminalMind [2847291] - Failed
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[15:25]</span> FriendlyGiant released claim on RuthlessKiller [2647183]
+        </div>
+    </div>
+</body>
+</html>
